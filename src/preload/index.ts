@@ -1,8 +1,20 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { NewItem, ProductQuery } from '../main/types'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  product: {
+    test: () => ipcRenderer.invoke('product:test'),
+    all: (page: number, pageSize: number, query?: ProductQuery) =>
+      ipcRenderer.invoke('product:all', page, pageSize, query),
+    categories: () => ipcRenderer.invoke('product:categories'),
+    stockSummary: () => ipcRenderer.invoke('product:stockSummary'),
+    add: (item: NewItem) => ipcRenderer.invoke('product:add', item),
+    adjustStock: (sku: string, delta: number) =>
+      ipcRenderer.invoke('product:adjustStock', sku, delta)
+  }
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

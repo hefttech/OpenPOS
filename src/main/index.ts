@@ -1,19 +1,24 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { productRepo } from './repo'
+import { NewItem, ProductQuery } from './types'
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1360,
+    height: 800,
+    minWidth: 1100,
+    minHeight: 650,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    // ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      contextIsolation: true,
+      nodeIntegration: false
     }
   })
 
@@ -72,3 +77,14 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+ipcMain.handle('product:test', () => productRepo.test())
+ipcMain.handle('product:all', (_event, page: number, pageSize: number, query?: ProductQuery) =>
+  productRepo.productList(page, pageSize, query)
+)
+ipcMain.handle('product:categories', () => productRepo.categories())
+ipcMain.handle('product:stockSummary', () => productRepo.stockSummary())
+ipcMain.handle('product:add', (_event, item: NewItem) => productRepo.addItem(item))
+ipcMain.handle('product:adjustStock', (_event, sku: string, delta: number) =>
+  productRepo.adjustStock(sku, delta)
+)

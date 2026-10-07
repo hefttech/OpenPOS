@@ -1,1 +1,85 @@
 @import 'tailwindcss';
+
+:root {
+  --bg: #e4e7ec;
+  --panel: #ffffff;
+  --head: #161b22;
+  --head-ink: #e7eaf0;
+  --ink: #171a21;
+  --ink2: #4b5260;
+  --muted: #8a91a1;
+  --line: #dde1e8;
+  --line2: #c5cbd6;
+  --row: #f6f8fb;
+  --hover: #eef3fc;
+  --sel: #e3edfd;
+  --soft: #f3f5f9;
+  --accent: #2563c9;
+  --accent-d: #1c4fa6;
+  --accent-l: #e3edfd;
+  --ok: #17803d;
+  --ok-l: #e2f5e9;
+  --warn: #a85f00;
+  --warn-l: #fff1d9;
+  --bad: #c0352b;
+  --bad-l: #fde8e6;
+  --disp: #0d1016;
+  --disp-ink: #ffc83d;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e1116;
+  --panel: #171b22;
+  --head: #0a0d11;
+  --head-ink: #e7eaf0;
+  --ink: #eceff5;
+  --ink2: #aab1c0;
+  --muted: #737b8c;
+  --line: #242a34;
+  --line2: #323a47;
+  --row: #1b2029;
+  --hover: #1f2733;
+  --sel: #1d2c47;
+  --soft: #1d222b;
+  --accent: #4b86e8;
+  --accent-d: #6a9cf0;
+  --accent-l: #1d2c47;
+  --ok: #47c277;
+  --ok-l: #14301f;
+  --warn: #f0b04c;
+  --warn-l: #3a2c10;
+  --bad: #f2766c;
+  --bad-l: #3a1a18;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    Inter,
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    Roboto,
+    Arial,
+    sans-serif;
+  font-size: 13.5px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
