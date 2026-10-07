@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>POS Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e4e7ec; --panel:#ffffff; --head:#161b22; --head-ink:#e7eaf0; --ink:#171a21; --ink2:#4b5260; --muted:#8a91a1;
+  --line:#dde1e8; --line2:#c5cbd6; --row:#f6f8fb; --hover:#eef3fc; --sel:#e3edfd; --soft:#f3f5f9;
+  --accent:#2563c9; --accent-d:#1c4fa6; --accent-l:#e3edfd;
+  --ok:#17803d; --ok-l:#e2f5e9; --warn:#a85f00; --warn-l:#fff1d9; --bad:#c0352b; --bad-l:#fde8e6;
+  --disp:#0d1016; --disp-ink:#ffc83d;
+  --shadow:none;
+  --r:6px;
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --panel:#171b22; --head:#0a0d11; --head-ink:#e7eaf0; --ink:#eceff5; --ink2:#aab1c0; --muted:#737b8c;
+  --line:#242a34; --line2:#323a47; --row:#1b2029; --hover:#1f2733; --sel:#1d2c47; --soft:#1d222b;
+  --accent:#4b86e8; --accent-d:#6a9cf0; --accent-l:#1d2c47;
+  --ok:#47c277; --ok-l:#14301f; --warn:#f0b04c; --warn-l:#3a2c10; --bad:#f2766c; --bad-l:#3a1a18;
+  --shadow:none;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;font-size:13.5px;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:var(--ink);cursor:pointer;border:1px solid var(--line2);background:var(--panel);border-radius:5px;padding:7px 14px;font-weight:500;transition:background .12s,border-color .12s,box-shadow .12s,transform .06s}
+button:hover{background:var(--soft)}
+
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input,select{font:inherit;color:inherit}
+.num,.mono{font-variant-numeric:tabular-nums}
+.mono{font-family:"JetBrains Mono",Consolas,"Lucida Console",monospace}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:6px;border:3px solid var(--panel)}
+
+/* title bar */
+.titlebar{height:44px;background:var(--head);color:var(--head-ink);display:flex;align-items:center;padding:0 16px;gap:18px;flex-shrink:0;font-size:12.5px}
+.titlebar .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:.02em}
+.titlebar .logo i{width:22px;height:22px;border-radius:6px;background:var(--accent);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;color:#fff}
+.titlebar .chip{display:flex;align-items:center;gap:7px;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,.07);color:#c9cfdb}
+.titlebar .chip .dot{width:7px;height:7px;border-radius:50%;background:#3ddc84;}
+.titlebar .sp{flex:1}
+.titlebar .tbtn{background:rgba(255,255,255,.08);border:none;color:#dfe3ec;padding:5px 12px;border-radius:4px;font-size:12px}
+.titlebar .tbtn:hover{background:rgba(255,255,255,.16)}
+
+/* layout */
+.work{flex:1;min-height:0;display:flex}
+.view{display:none;flex:1;min-width:0;min-height:0}
+.view.active{display:flex}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.box>h3{padding:13px 16px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
+.box>h3 small{text-transform:none;letter-spacing:0;font-weight:400}
+kbd{font:500 11px "JetBrains Mono",Consolas,monospace;background:var(--soft);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--ink2)}
+
+/* sales view */
+#sales{padding:12px;gap:12px}
+.cats{width:168px;flex-shrink:0}
+.cats ul{list-style:none;overflow-y:auto;flex:1;padding:0 8px 8px;display:flex;flex-direction:column;gap:2px}
+.cats li{padding:9px 12px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:500;color:var(--ink2);transition:background .12s}
+.cats li:hover{background:var(--soft)}
+.cats li.active{background:var(--accent);color:#fff;font-weight:600;}
+.cats li span{font-size:11.5px;opacity:.7;font-weight:500}
+.lookup{flex:1}
+.find{padding:0 16px 12px;flex-shrink:0;position:relative}
+.find svg{position:absolute;left:30px;top:13px;width:18px;height:18px;color:var(--muted);pointer-events:none}
+.find input{width:100%;padding:12px 14px 12px 42px;font-size:15px;border:1.5px solid var(--line2);border-radius:6px;outline:none;background:var(--soft);transition:.15s}
+.find input:focus{border-color:var(--accent);background:var(--panel);}
+.tbl-wrap{flex:1;overflow:auto;min-height:0;border-top:1px solid var(--line)}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:var(--panel);text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+th.r,td.r{text-align:right}
+td{padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+#lookupBody tr{cursor:pointer;transition:background .08s}
+#lookupBody tr:hover td{background:var(--hover)}
+#lookupBody tr.sel td{background:var(--sel)}
+#lookupBody tr.sel td:first-child{border-left:3px solid var(--accent)}
+#lookupBody tr.out td{color:var(--muted);cursor:not-allowed}
+td.desc{white-space:normal;font-weight:600}
+.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;background:var(--soft);color:var(--ink2)}
+.low{color:var(--warn);font-weight:700}
+.zero{color:var(--bad);font-weight:700}
+
+.sale{width:430px;flex-shrink:0}
+.lines{flex:1;overflow:auto;min-height:0;border-top:1px solid var(--line)}
+.lines td{padding:9px 12px}
+.lines .q{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:5px;overflow:hidden;background:var(--panel)}
+.lines .q button{border:none;border-radius:0;padding:0;width:26px;height:26px;background:var(--soft);font-size:15px;line-height:1}
+.lines .q button:hover{background:var(--accent-l);color:var(--accent)}
+.lines .q span{min-width:28px;text-align:center;font-weight:700}
+.lines .x{border:none;background:none;color:var(--muted);font-size:14px;padding:4px 6px;border-radius:6px}
+.lines .x:hover{background:var(--bad-l);color:var(--bad)}
+.lines .empty{padding:56px 14px;text-align:center;color:var(--muted)}
+.totals{border-top:1px solid var(--line);padding:10px 16px;flex-shrink:0}
+.totals .r{display:flex;justify-content:space-between;align-items:center;padding:3px 0;color:var(--ink2)}
+.totals input{width:58px;text-align:right;padding:3px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);outline:none}
+.totals input:focus{border-color:var(--accent)}
+.display{background:var(--disp);color:var(--disp-ink);padding:12px 18px;display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0;margin:0 12px;border-radius:6px;}
+.display small{color:#b99530;font-size:11px;letter-spacing:.14em;font-weight:600}
+.display b{font-family:"JetBrains Mono",Consolas,"Lucida Console",monospace;font-size:32px;font-weight:500;}
+.paybar{display:grid;grid-template-columns:1fr 2fr;gap:8px;padding:12px;flex-shrink:0}
+.paybar button{padding:15px;font-weight:700;font-size:14.5px;border-radius:6px}
+.paybar .pay{background:var(--accent);color:#fff;border-color:var(--accent);}
+.paybar .pay:hover{background:var(--accent-d)}
+.paybar button:disabled{opacity:.4;cursor:not-allowed;}
+
+/* inventory */
+#stock{padding:12px;flex-direction:column;gap:12px}
+.strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex-shrink:0}
+.strip div{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.strip small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.strip b{font-size:21px;font-weight:700;letter-spacing:-.01em}
+#stock .box{flex:1}
+.tools{padding:0 16px 12px;display:flex;gap:8px;flex-shrink:0;align-items:center}
+.tools input{padding:9px 12px;width:300px;border:1.5px solid var(--line2);border-radius:6px;outline:none;background:var(--soft)}
+.tools input:focus{border-color:var(--accent);background:var(--panel);}
+.tools .sp{flex:1}
+.pri{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.pri:hover{background:var(--accent-d)}
+.rcv{display:flex;gap:6px;justify-content:flex-end}
+.rcv input{width:64px;padding:5px 8px;text-align:right;border:1px solid var(--line2);border-radius:5px;outline:none;background:var(--panel)}
+.rcv input:focus{border-color:var(--accent)}
+.rcv button{padding:5px 12px;font-size:12.5px}
+.rcv button:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:4px;font-size:12px;font-weight:600}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.badge.ok{background:var(--ok-l);color:var(--ok)}.badge.low{background:var(--warn-l);color:var(--warn)}.badge.out{background:var(--bad-l);color:var(--bad)}
+
+/* fkeys */
+.fkeys{height:54px;background:var(--head);display:flex;gap:6px;padding:7px 12px;flex-shrink:0;align-items:center}
+.fkeys button{flex:0 1 128px;background:rgba(255,255,255,.07);color:#dfe3ec;border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;gap:8px;height:100%;padding:0 10px;font-size:12.5px;border-radius:5px}
+.fkeys button:hover{background:rgba(255,255,255,.14)}
+.fkeys button.active{background:var(--accent);border-color:var(--accent)}
+.fkeys button b{font:600 10.5px "JetBrains Mono",Consolas,monospace;background:rgba(255,255,255,.14);padding:2px 6px;border-radius:5px;color:#fff}
+.fkeys .sp{flex:1}
+.fkeys button.paykey{background:var(--accent);border-color:var(--accent);font-weight:600}
+.fkeys button.paykey:hover{background:var(--accent-d)}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(10,14,22,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--ink);border-radius:5px;width:100%;max-width:410px;max-height:96vh;overflow-y:auto;}
+@keyframes rise{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.m-h{padding:16px 20px 4px;font-weight:700;font-size:16px}
+.m-b{padding:12px 20px 16px}
+.m-f{padding:12px 20px 18px;display:flex;gap:8px;justify-content:flex-end}
+.m-f button{padding:10px 20px;font-weight:600;border-radius:6px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px}
+.field input{width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:5px;background:var(--panel);outline:none}
+.field input:focus{border-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dueRow{display:flex;justify-content:space-between;background:var(--disp);color:var(--disp-ink);padding:14px 16px;align-items:baseline;margin-bottom:14px;border-radius:6px}
+.dueRow b{font-family:"JetBrains Mono",Consolas,monospace;font-size:28px;font-weight:500;}
+.dueRow small{color:#b99530;letter-spacing:.12em;font-weight:600;font-size:11px}
+.methods{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:14px;background:var(--soft);padding:4px;border-radius:6px}
+.methods button{border:none;background:none;padding:8px;border-radius:5px;color:var(--ink2)}
+.methods button.active{background:var(--accent);color:#fff;font-weight:700}
+.tender{display:flex;justify-content:space-between;align-items:baseline;background:var(--soft);border:1.5px solid var(--line2);border-radius:6px;padding:9px 12px;margin-bottom:8px}
+.tender b{font-family:"JetBrains Mono",Consolas,monospace;font-size:20px;font-weight:500}
+.quick{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.quick button{padding:4px 11px;font-size:12px;border-radius:4px;background:var(--accent-l);border-color:transparent;color:var(--accent);font-weight:600}
+.quick button:hover{background:var(--accent);color:#fff}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.pad button{padding:12px 0;font-size:17px;border-radius:6px;font-weight:600}
+.chg{display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:4px 2px}
+.receipt{font-family:"JetBrains Mono",Consolas,"Courier New",monospace;font-size:12px;background:#fff;color:#111;padding:16px;border:1px solid var(--line2);border-radius:6px;line-height:1.5}
+.receipt .c{text-align:center}
+.receipt hr{border:none;border-top:1px dashed #888;margin:8px 0}
+.receipt .r{display:flex;justify-content:space-between;gap:8px}
+.receipt .sub{color:#666;padding-left:8px}
+.done-h{display:flex;align-items:center;gap:10px}
+.done-h i{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-style:normal;font-size:13px}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(14px);background:#171a21;color:#fff;padding:10px 16px;font-weight:600;z-index:99;border-radius:6px;opacity:0;pointer-events:none;transition:.2s;}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+@media(max-width:1000px){
+  #sales{flex-direction:column;overflow-y:auto}.cats{width:auto}.cats ul{flex-direction:row;overflow-x:auto}.cats li{white-space:nowrap}
+  .sale{width:auto}.lookup{min-height:340px}.lines{min-height:160px}
+  .strip{grid-template-columns:repeat(2,1fr)}.fkeys button span{display:none}
+  .titlebar .chip{display:none}
+}
+@media print{
+  body *{visibility:hidden}
+  #receiptBox,#receiptBox *{visibility:visible}
+  #receiptBox{position:absolute;left:0;top:0;width:100%;border:none}
+}
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="logo"><i>P</i>POS Register</div>
+  <span class="chip"><span class="dot"></span>Main Branch · Terminal 01</span>
+  <span class="chip">Cashier: Admin</span>
+  <div class="sp"></div><span class="mono" id="clock" style="opacity:.8"></span>
+  <button class="tbtn" id="themeBtn">Dark mode</button>
+</div>
+
+<div class="work">
+  <!-- SALES -->
+  <section class="view active" id="sales">
+    <div class="box cats"><h3>Categories</h3><ul id="cats"></ul></div>
+
+    <div class="box lookup">
+      <h3>Item lookup <small><kbd>↑</kbd> <kbd>↓</kbd> move &nbsp; <kbd>Enter</kbd> add</small></h3>
+      <div class="find">
+        <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="search" placeholder="Scan barcode or type item name…" autocomplete="off">
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>SKU</th><th>Description</th><th>Category</th><th class="r">Price</th><th class="r">Stock</th></tr></thead>
+        <tbody id="lookupBody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="box sale">
+      <h3>Sale <span class="mono" id="orderNo"></span></h3>
+      <div class="lines"><table>
+        <thead><tr><th>Item</th><th>Qty</th><th class="r">Amount</th><th></th></tr></thead>
+        <tbody id="lines"></tbody>
+      </table></div>
+      <div class="totals">
+        <div class="r"><span>Items</span><span class="num" id="cnt">0</span></div>
+        <div class="r"><span>Subtotal</span><span class="num" id="sub"></span></div>
+        <div class="r"><span>Discount %</span><input type="number" id="disc" min="0" max="100" value="0"></div>
+        <div class="r"><span>Tax <span id="taxPct"></span>%</span><span class="num" id="tax"></span></div>
+      </div>
+      <div class="display"><small>TOTAL DUE</small><b id="total"></b></div>
+      <div class="paybar"><button id="voidBtn">Void sale</button><button class="pay" id="payBtn" disabled>PAY</button></div>
+    </div>
+  </section>
+
+  <!-- STOCK -->
+  <section class="view" id="stock">
+    <div class="strip" id="strip"></div>
+    <div class="box">
+      <h3>Stock on hand</h3>
+      <div class="tools">
+        <input id="stockSearch" placeholder="Filter by name, SKU or category">
+        <div class="sp"></div>
+        <button class="pri" id="addBtn">New item (F6)</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>SKU</th><th>Description</th><th>Category</th><th class="r">Price</th><th class="r">On hand</th><th>Status</th><th class="r">Receive stock</th></tr></thead>
+        <tbody id="stockBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+</div>
+
+<div class="fkeys">
+  <button data-fk="F1" id="fk1"><b>F1</b><span>Sales</span></button>
+  <button data-fk="F2" id="fk2"><b>F2</b><span>Stock</span></button>
+  <button data-fk="F3"><b>F3</b><span>Find item</span></button>
+  <button data-fk="F4"><b>F4</b><span>Void sale</span></button>
+  <button data-fk="F5"><b>F5</b><span>Discount</span></button>
+  <button data-fk="F6"><b>F6</b><span>New item</span></button>
+  <div class="sp"></div>
+  <button data-fk="F9" class="paykey"><b>F9</b><span>Pay</span></button>
+</div>
+
+<div class="overlay" id="addModal"><div class="modal">
+  <div class="m-h">New item</div>
+  <div class="m-b">
+    <div class="field"><label>Description</label><input id="nName"></div>
+    <div class="two">
+      <div class="field"><label>SKU / barcode</label><input id="nSku"></div>
+      <div class="field"><label>Category</label><input id="nCat" list="catList"><datalist id="catList"></datalist></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Price (Rs.)</label><input id="nPrice" type="number" min="0" step="0.01"></div>
+      <div class="field"><label>Opening stock</label><input id="nQty" type="number" min="0"></div>
+    </div>
+  </div>
+  <div class="m-f"><button data-close>Cancel</button><button class="pri" id="saveProd">Save</button></div>
+</div></div>
+
+<div class="overlay" id="payModal"><div class="modal">
+  <div class="m-h">Payment</div>
+  <div class="m-b">
+    <div class="dueRow"><small>AMOUNT DUE</small><b id="dueAmt"></b></div>
+    <div class="methods">
+      <button class="active" data-m="Cash">Cash</button><button data-m="Card">Card</button><button data-m="Wallet">Wallet / QR</button>
+    </div>
+    <div id="cashBox">
+      <div class="tender"><span>Tendered</span><b id="recvAmt"></b></div>
+      <div class="quick" id="quick"></div>
+      <div class="pad" id="pad"></div>
+      <div class="chg"><span>Change</span><span class="mono" id="changeAmt">—</span></div>
+    </div>
+  </div>
+  <div class="m-f"><button data-close>Cancel</button><button class="pri" id="confirmPay">Complete (Enter)</button></div>
+</div></div>
+
+<div class="overlay" id="receiptModal"><div class="modal">
+  <div class="m-h done-h"><i>✓</i>Sale complete</div>
+  <div class="m-b"><div class="receipt" id="receiptBox"></div></div>
+  <div class="m-f"><button id="printBtn">Print</button><button class="pri" id="newSale">Next sale</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TAX=8, CUR='Rs. ';
+const fmt=n=>CUR+n.toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let products=[
+  {id:1,sku:'1001',name:'Espresso',cat:'Drinks',price:280,qty:50},
+  {id:2,sku:'1002',name:'Iced Latte',cat:'Drinks',price:420,qty:30},
+  {id:3,sku:'1003',name:'Orange Juice 300ml',cat:'Drinks',price:350,qty:4},
+  {id:4,sku:'1004',name:'Mineral Water 500ml',cat:'Drinks',price:100,qty:120},
+  {id:5,sku:'2001',name:'Butter Croissant',cat:'Bakery',price:260,qty:18},
+  {id:6,sku:'2002',name:'Chocolate Cake Slice',cat:'Bakery',price:520,qty:9},
+  {id:7,sku:'2003',name:'Bread Loaf',cat:'Bakery',price:180,qty:25},
+  {id:8,sku:'2004',name:'Glazed Donut',cat:'Bakery',price:150,qty:0},
+  {id:9,sku:'3001',name:'Chicken Sandwich',cat:'Food',price:650,qty:14},
+  {id:10,sku:'3002',name:'Veg Burger',cat:'Food',price:780,qty:10},
+  {id:11,sku:'3003',name:'Egg Fried Rice',cat:'Food',price:900,qty:3},
+  {id:12,sku:'4001',name:'Potato Chips 60g',cat:'Snacks',price:200,qty:60},
+  {id:13,sku:'4002',name:'Chocolate Bar',cat:'Snacks',price:240,qty:45},
+  {id:14,sku:'4003',name:'Mixed Nuts 100g',cat:'Snacks',price:380,qty:22},
+];
+let nextId=15,cart={},cat='All',method='Cash',orderNo=1001,lastTotal=0,recv='',view='sales',sel=0,shown=[];
+
+/* ---------- view switching ---------- */
+function go(v){
+  view=v;
+  $('#sales').classList.toggle('active',v==='sales');
+  $('#stock').classList.toggle('active',v==='stock');
+  $('#fk1').classList.toggle('active',v==='sales');
+  $('#fk2').classList.toggle('active',v==='stock');
+  render(); if(v==='sales')$('#search').focus();
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2000)}
+const openM=id=>$(id).classList.add('show'),closeM=id=>$(id).classList.remove('show');
+const modalOpen=()=>!!document.querySelector('.overlay.show');
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.overlay').classList.remove('show'));
+const tick=()=>$('#clock').textContent=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+tick();setInterval(tick,15000);
+
+/* ---------- sales ---------- */
+function renderCats(){
+  const cats=['All',...new Set(products.map(p=>p.cat))];
+  $('#cats').innerHTML=cats.map(c=>{const n=c==='All'?products.length:products.filter(p=>p.cat===c).length;
+    return `<li class="${c===cat?'active':''}" data-c="${esc(c)}">${esc(c)}<span>${n}</span></li>`}).join('');
+  $('#cats').querySelectorAll('li').forEach(li=>li.onclick=()=>{cat=li.dataset.c;sel=0;renderLookup();renderCats();$('#search').focus()});
+  $('#catList').innerHTML=cats.slice(1).map(c=>`<option value="${esc(c)}">`).join('');
+}
+function renderLookup(){
+  const q=$('#search').value.trim().toLowerCase();
+  shown=products.filter(p=>(cat==='All'||p.cat===cat)&&(!q||p.name.toLowerCase().includes(q)||p.sku.includes(q)));
+  if(sel>=shown.length)sel=Math.max(0,shown.length-1);
+  $('#lookupBody').innerHTML=shown.length?shown.map((p,i)=>`
+    <tr data-i="${i}" class="${i===sel?'sel':''} ${p.qty<=0?'out':''}">
+      <td class="num">${esc(p.sku)}</td><td class="desc">${esc(p.name)}</td><td><span class="pill">${esc(p.cat)}</span></td>
+      <td class="r num">${fmt(p.price)}</td>
+      <td class="r num ${p.qty<=0?'zero':p.qty<=5?'low':''}">${p.qty}</td></tr>`).join('')
+    :'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">No matching items</td></tr>';
+  $('#lookupBody').querySelectorAll('tr[data-i]').forEach(tr=>tr.onclick=()=>{sel=+tr.dataset.i;addToCart(shown[sel].id);$('#search').focus()});
+}
+function addToCart(id){
+  const p=products.find(x=>x.id===id),cur=cart[id]||0;
+  if(p.qty<=0){toast(`${p.name} is out of stock`);return}
+  if(cur+1>p.qty){toast(`Only ${p.qty} of ${p.name} in stock`);return}
+  cart[id]=cur+1;renderCart();
+}
+function setQty(id,d){
+  const p=products.find(x=>x.id===id),n=(cart[id]||0)+d;
+  if(n>p.qty){toast(`Only ${p.qty} in stock`);return}
+  if(n<=0)delete cart[id];else cart[id]=n;renderCart();
+}
+function totals(){
+  const sub=Object.entries(cart).reduce((s,[id,q])=>s+products.find(p=>p.id==id).price*q,0);
+  const dp=Math.min(100,Math.max(0,+$('#disc').value||0)),disc=sub*dp/100,tax=(sub-disc)*TAX/100;
+  return{sub,dp,disc,tax,total:sub-disc+tax};
+}
+function renderCart(){
+  $('#orderNo').textContent='#'+orderNo;
+  const ids=Object.keys(cart);
+  $('#lines').innerHTML=ids.length?ids.map(id=>{const p=products.find(x=>x.id==id),q=cart[id];return `
+    <tr><td><b>${esc(p.name)}</b><div style="color:var(--muted);font-size:12px" class="num">${fmt(p.price)} ea</div></td>
+      <td><span class="q"><button data-id="${id}" data-d="-1">−</button><span class="num">${q}</span><button data-id="${id}" data-d="1">+</button></span></td>
+      <td class="r num"><b>${fmt(p.price*q)}</b></td>
+      <td><button class="x" data-id="${id}" title="Remove">✕</button></td></tr>`}).join('')
+    :'<tr><td colspan="4" class="empty">Sale is empty. Scan or select an item.</td></tr>';
+  $('#lines').querySelectorAll('.q button').forEach(b=>b.onclick=()=>{setQty(+b.dataset.id,+b.dataset.d);$('#search').focus()});
+  $('#lines').querySelectorAll('.x').forEach(b=>b.onclick=()=>{delete cart[b.dataset.id];renderCart()});
+  const t=totals();
+  $('#cnt').textContent=Object.values(cart).reduce((a,b)=>a+b,0);
+  $('#sub').textContent=fmt(t.sub);$('#tax').textContent=fmt(t.tax);$('#total').textContent=fmt(t.total);
+  $('#taxPct').textContent=TAX;$('#payBtn').disabled=!ids.length;
+}
+$('#disc').oninput=renderCart;
+function voidSale(){if(!Object.keys(cart).length)return;cart={};$('#disc').value=0;renderCart();toast('Sale voided')}
+$('#voidBtn').onclick=voidSale;
+
+$('#search').oninput=()=>{sel=0;renderLookup()};
+$('#search').onkeydown=e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();sel=Math.min(shown.length-1,sel+1);renderLookup();scrollSel()}
+  else if(e.key==='ArrowUp'){e.preventDefault();sel=Math.max(0,sel-1);renderLookup();scrollSel()}
+  else if(e.key==='Enter'){
+    const v=e.target.value.trim(),exact=products.find(x=>x.sku===v);
+    if(exact){addToCart(exact.id)}
+    else if(shown[sel]){addToCart(shown[sel].id)}
+    e.target.value='';sel=0;renderLookup();
+  }
+};
+function scrollSel(){const r=$('#lookupBody tr.sel');if(r)r.scrollIntoView({block:'nearest'})}
+
+/* ---------- payment ---------- */
+$('#pad').innerHTML=['7','8','9','4','5','6','1','2','3','.','0','⌫'].map(k=>`<button data-k="${k}">${k}</button>`).join('');
+$('#pad').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.k;
+  if(k==='⌫')recv=recv.slice(0,-1);
+  else if(k==='.'){if(!recv.includes('.'))recv+=recv?'.':'0.'}
+  else if(recv.length<9)recv+=k;
+  calcChange();
+});
+function calcChange(){
+  const r=parseFloat(recv)||0,c=r-lastTotal;
+  $('#recvAmt').textContent=CUR+(recv||'0.00');
+  $('#changeAmt').textContent=c>=0&&r>0?fmt(c):'—';
+}
+function startPay(){
+  if(!Object.keys(cart).length){toast('Nothing to pay');return}
+  const t=totals();lastTotal=t.total;$('#dueAmt').textContent=fmt(t.total);
+  const r=Math.ceil(t.total),opts=[...new Set([r,Math.ceil(r/500)*500,Math.ceil(r/1000)*1000,Math.ceil(r/1000)*1000+1000])];
+  $('#quick').innerHTML=opts.map(v=>`<button data-v="${v}">${v.toLocaleString()}</button>`).join('');
+  $('#quick').querySelectorAll('button').forEach(b=>b.onclick=()=>{recv=b.dataset.v;calcChange()});
+  recv='';calcChange();openM('#payModal');
+}
+$('#payBtn').onclick=startPay;
+document.querySelectorAll('.methods button').forEach(b=>b.onclick=()=>{
+  method=b.dataset.m;
+  document.querySelectorAll('.methods button').forEach(x=>x.classList.toggle('active',x===b));
+  $('#cashBox').style.display=method==='Cash'?'block':'none';
+});
+function confirmPay(){
+  const t=totals(),rec=parseFloat(recv)||0;
+  if(method==='Cash'&&rec<t.total-0.001){toast('Tendered amount is less than the total');return}
+  const lines=Object.entries(cart).map(([id,q])=>{const p=products.find(x=>x.id==id);p.qty-=q;return{name:p.name,q,price:p.price}});
+  buildReceipt(lines,t,method,method==='Cash'?rec:t.total);
+  cart={};$('#disc').value=0;orderNo++;
+  closeM('#payModal');openM('#receiptModal');render();
+}
+$('#confirmPay').onclick=confirmPay;
+
+function buildReceipt(lines,t,m,paid){
+  const d=new Date();
+  $('#receiptBox').innerHTML=`
+    <div class="c"><b>MAIN BRANCH</b><br>123 Main Street, Colombo<br>Tel 011 234 5678</div><hr>
+    <div class="r"><span>Receipt #${orderNo}</span><span>${d.toLocaleDateString('en-GB')}</span></div>
+    <div class="r"><span>Cashier: Admin</span><span>${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></div><hr>
+    ${lines.map(l=>`<div class="r"><span>${esc(l.name)}</span><span>${fmt(l.q*l.price)}</span></div><div class="sub">${l.q} x ${fmt(l.price)}</div>`).join('')}<hr>
+    <div class="r"><span>Subtotal</span><span>${fmt(t.sub)}</span></div>
+    ${t.dp?`<div class="r"><span>Discount ${t.dp}%</span><span>-${fmt(t.disc)}</span></div>`:''}
+    <div class="r"><span>Tax ${TAX}%</span><span>${fmt(t.tax)}</span></div>
+    <div class="r"><b>TOTAL</b><b>${fmt(t.total)}</b></div><hr>
+    <div class="r"><span>${m}</span><span>${fmt(paid)}</span></div>
+    ${m==='Cash'?`<div class="r"><span>Change</span><span>${fmt(paid-t.total)}</span></div>`:''}<hr>
+    <div class="c">Thank you</div>`;
+}
+$('#printBtn').onclick=()=>window.print();
+$('#newSale').onclick=()=>{closeM('#receiptModal');if(view==='sales')$('#search').focus()};
+
+/* ---------- stock ---------- */
+function renderStock(){
+  const val=products.reduce((s,p)=>s+p.price*p.qty,0),low=products.filter(p=>p.qty>0&&p.qty<=5).length,out=products.filter(p=>p.qty<=0).length;
+  $('#strip').innerHTML=[['Items',products.length],['Units on hand',products.reduce((s,p)=>s+p.qty,0).toLocaleString()],['Stock value',fmt(val)],['Low stock',low],['Out of stock',out]]
+    .map(([a,b])=>`<div><small>${a}</small><b class="num">${b}</b></div>`).join('');
+  const q=$('#stockSearch').value.trim().toLowerCase();
+  const rows=products.filter(p=>!q||p.name.toLowerCase().includes(q)||p.sku.includes(q)||p.cat.toLowerCase().includes(q));
+  $('#stockBody').innerHTML=rows.map(p=>{
+    const s=p.qty<=0?['out','Out of stock']:p.qty<=5?['low','Low stock']:['ok','In stock'];
+    return `<tr><td class="num">${esc(p.sku)}</td><td class="desc">${esc(p.name)}</td><td><span class="pill">${esc(p.cat)}</span></td>
+      <td class="r num">${fmt(p.price)}</td><td class="r num"><b>${p.qty}</b></td><td><span class="badge ${s[0]}">${s[1]}</span></td>
+      <td><div class="rcv"><input type="number" min="1" placeholder="Qty" id="rs${p.id}"><button data-id="${p.id}">Receive</button></div></td></tr>`}).join('')
+    ||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No matching items</td></tr>';
+  $('#stockBody').querySelectorAll('.rcv button').forEach(b=>b.onclick=()=>receive(+b.dataset.id));
+  $('#stockBody').querySelectorAll('.rcv input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')receive(+i.id.slice(2))});
+}
+function receive(id){
+  const n=parseInt($('#rs'+id).value);
+  if(!n||n<1){toast('Enter a quantity first');return}
+  const p=products.find(x=>x.id===id);p.qty+=n;toast(`Received ${n} × ${p.name}`);render();
+}
+$('#stockSearch').oninput=renderStock;
+function newItem(){go('stock');['#nName','#nSku','#nCat','#nPrice','#nQty'].forEach(i=>$(i).value='');openM('#addModal');$('#nName').focus()}
+$('#addBtn').onclick=newItem;
+$('#saveProd').onclick=()=>{
+  const name=$('#nName').value.trim(),price=parseFloat($('#nPrice').value);
+  if(!name||isNaN(price)||price<0){toast('Description and a valid price are required');return}
+  const sku=$('#nSku').value.trim()||String(5000+nextId);
+  if(products.some(p=>p.sku===sku)){toast('That SKU already exists');return}
+  products.push({id:nextId++,sku,name,cat:$('#nCat').value.trim()||'General',price,qty:parseInt($('#nQty').value)||0});
+  closeM('#addModal');toast(`Added ${name}`);render();
+};
+
+$('#themeBtn').onclick=()=>{const r=document.documentElement,d=r.dataset.theme==='dark';r.dataset.theme=d?'light':'dark';$('#themeBtn').textContent=d?'Dark mode':'Light mode'};
+
+/* ---------- function keys ---------- */
+const FK={
+  F1:()=>go('sales'), F2:()=>go('stock'),
+  F3:()=>{go('sales');$('#search').focus();$('#search').select()},
+  F4:()=>{if(view==='sales')voidSale()},
+  F5:()=>{go('sales');$('#disc').focus();$('#disc').select()},
+  F6:newItem, F9:()=>{if(view==='sales')startPay()}
+};
+document.querySelectorAll('[data-fk]').forEach(b=>b.onclick=()=>FK[b.dataset.fk]&&FK[b.dataset.fk]());
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));return}
+  if(FK[e.key]){e.preventDefault();if(!modalOpen()||e.key==='F9')FK[e.key]();return}
+  if(e.key==='Enter'&&$('#payModal').classList.contains('show')&&document.activeElement.tagName!=='BUTTON')confirmPay();
+  if($('#payModal').classList.contains('show')){
+    if(/^[0-9]$/.test(e.key)&&recv.length<9){recv+=e.key;calcChange()}
+    else if(e.key==='.'&&!recv.includes('.')){recv+=recv?'.':'0.';calcChange()}
+    else if(e.key==='Backspace'){recv=recv.slice(0,-1);calcChange()}
+  }
+});
+
+function render(){renderCats();renderLookup();renderCart();renderStock()}
+render();$('#search').focus();
+</script>
+</body>
+</html>
